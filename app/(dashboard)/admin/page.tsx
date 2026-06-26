@@ -50,7 +50,8 @@ export default function AdminPage() {
         .select('id, organization_id')
         .eq('clerk_id', user.id)
         .single();
-      console.log('[AdminPage] userData:', userData, 'userErr:', userErr);
+      console.log('[AdminPage] userData:', userData);
+      console.log('[AdminPage] userErr code:', userErr?.code, 'message:', userErr?.message, 'details:', userErr?.details);
       if (!userData?.organization_id) { setLoading(false); return; }
       setOrgId(userData.organization_id);
 
