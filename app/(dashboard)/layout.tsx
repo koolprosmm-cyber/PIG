@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser, useClerk } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -28,11 +27,6 @@ export default function DashboardLayout({
   const { user } = useUser();
   const { signOut } = useClerk();
   const pathname = usePathname();
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return null;
 
   const navItems = [
     { href: '/chat', label: 'AI Coach', icon: MessageSquare },
