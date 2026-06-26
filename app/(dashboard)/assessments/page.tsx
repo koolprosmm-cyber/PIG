@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { ClipboardList, CheckCircle2, Clock, Plus } from 'lucide-react';
 
 interface AssessmentListItem {
@@ -15,6 +15,7 @@ interface AssessmentListItem {
 }
 
 export default function AssessmentsListPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
   const [loading, setLoading] = useState(true);

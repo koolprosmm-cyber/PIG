@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { HealthScoreCard } from '@/components/dashboard/HealthScoreCard';
 import { DimensionRadarChart } from '@/components/dashboard/DimensionRadarChart';
 import { DimensionBarChart } from '@/components/dashboard/DimensionBarChart';
@@ -14,6 +14,7 @@ import { AssessmentResult, RecommendationResult, ClusterAnswer } from '@/lib/pig
 import { ArrowLeft } from 'lucide-react';
 
 export default function ResultsDetailPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const params = useParams();
   const router = useRouter();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { ClusterAnswer, ProtocolDefinition, RecommendationResult } from '@/lib/pig3/types';
 import { DiagnosticIndices } from '@/lib/pig3/types';
 import { projectSelectedProtocols, indexDelta, getProtocolBump } from '@/lib/pig3/projection';
@@ -44,6 +44,7 @@ function IndexCard({ label, code, baseline, projected, inverse }: IndexCardProps
 }
 
 export default function ScenariosPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [baselineAnswers, setBaselineAnswers] = useState<ClusterAnswer[]>([]);
   const [baselineIndices, setBaselineIndices] = useState<DiagnosticIndices | null>(null);

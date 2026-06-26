@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { AssessmentResult, ClusterAnswer } from '@/lib/pig3/types';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -16,6 +16,7 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

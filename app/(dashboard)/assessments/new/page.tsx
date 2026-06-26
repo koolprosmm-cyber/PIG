@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { CLUSTERS, CLUSTER_ORDER, getClustersByCategory } from '@/lib/pig3/clusters';
 import { calculateFullAssessment } from '@/lib/pig3/scoring';
 import { generateRecommendations } from '@/lib/pig3/recommendations';
@@ -12,6 +12,7 @@ import { AssessmentProgress } from '@/components/assessment/AssessmentProgress';
 import { AssessmentSummary } from '@/components/assessment/AssessmentSummary';
 
 export default function NewAssessmentPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<ClusterAnswer[]>([]);

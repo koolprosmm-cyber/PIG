@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { Users, Building, Mail, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [organization, setOrganization] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);

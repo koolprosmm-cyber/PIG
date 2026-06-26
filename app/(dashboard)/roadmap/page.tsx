@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { ClusterAnswer, ProtocolDefinition, ProtocolId } from '@/lib/pig3/types';
 import { buildProjectionPlan, indexDelta } from '@/lib/pig3/projection';
 import { MapIcon, Info, CheckCircle2, Circle, Clock } from 'lucide-react';
@@ -34,6 +34,7 @@ function StatusIcon({ status }: { status: ProgressStatus }) {
 }
 
 export default function RoadmapPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [baselineAnswers, setBaselineAnswers] = useState<ClusterAnswer[]>([]);
   const [protocols, setProtocols] = useState<ProtocolDefinition[]>([]);

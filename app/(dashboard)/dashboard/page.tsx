@@ -3,7 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { HealthScoreCard } from '@/components/dashboard/HealthScoreCard';
 import { DimensionRadarChart } from '@/components/dashboard/DimensionRadarChart';
 import { DimensionBarChart } from '@/components/dashboard/DimensionBarChart';
@@ -12,6 +12,7 @@ import { RecommendationsCard } from '@/components/dashboard/RecommendationsCard'
 import { AssessmentResult, RecommendationResult, ClusterAnswer } from '@/lib/pig3/types';
 
 export default function DashboardPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResult | null>(null);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { FileText, Download } from 'lucide-react';
 
 interface Assessment {
@@ -13,6 +13,7 @@ interface Assessment {
 }
 
 export default function ReportsPage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);

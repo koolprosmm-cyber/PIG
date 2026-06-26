@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { ShieldAlert, Users, Mail, Database } from 'lucide-react';
 
 const ROLES = ['owner', 'admin', 'manager', 'staff'] as const;
@@ -30,6 +30,7 @@ interface KbStats {
 }
 
 export default function AdminPage() {
+  const supabase = useSupabase();
   const { user, isLoaded } = useUser();
   console.log('[AdminPage] render — isLoaded:', isLoaded, 'user:', user?.id);
   const [orgId, setOrgId] = useState<string | null>(null);

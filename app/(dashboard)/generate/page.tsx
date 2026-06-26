@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { CONTENT_TYPE_LABELS, ContentType } from '@/lib/pig3/content-generator';
 import { Download, Loader2 } from 'lucide-react';
 
@@ -13,6 +13,7 @@ interface AssessmentListItem {
 }
 
 export default function GeneratePage() {
+  const supabase = useSupabase();
   const { user } = useUser();
   const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
   const [selectedAssessment, setSelectedAssessment] = useState<string>('');
