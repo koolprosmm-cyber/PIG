@@ -30,7 +30,7 @@ interface KbStats {
 }
 
 export default function AdminPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [orgId, setOrgId] = useState<string | null>(null);
   const [myRole, setMyRole] = useState<Role | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -98,7 +98,7 @@ export default function AdminPage() {
     }
   }, [user]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isLoaded) fetchData(); }, [isLoaded, fetchData]);
 
   async function updateRole(memberId: string, role: Role) {
     setSavingMember(memberId);
@@ -122,7 +122,7 @@ export default function AdminPage() {
     setCancellingInv(null);
   }
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-4 animate-pulse">
         <div className="card h-24" />
