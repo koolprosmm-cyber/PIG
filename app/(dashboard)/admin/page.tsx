@@ -55,12 +55,13 @@ export default function AdminPage() {
       setOrgId(userData.organization_id);
 
       // Check caller's role
-      const { data: myMembership } = await supabase
+      const { data: myMembership, error: membershipErr } = await supabase
         .from('organization_members')
         .select('role')
         .eq('organization_id', userData.organization_id)
         .eq('user_id', userData.id)
         .single();
+      console.log('[AdminPage] membership query — orgId:', userData.organization_id, 'userId:', userData.id, 'result:', myMembership, 'error:', membershipErr);
       setMyRole(myMembership?.role ?? null);
 
       if (!myMembership || !['owner', 'admin'].includes(myMembership.role)) {
