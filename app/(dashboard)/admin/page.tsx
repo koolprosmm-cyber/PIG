@@ -31,6 +31,7 @@ interface KbStats {
 
 export default function AdminPage() {
   const { user, isLoaded } = useUser();
+  console.log('[AdminPage] render — isLoaded:', isLoaded, 'user:', user?.id);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [myRole, setMyRole] = useState<Role | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -41,13 +42,15 @@ export default function AdminPage() {
   const [cancellingInv, setCancellingInv] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    console.log('[AdminPage] fetchData called — user:', user?.id);
+    if (!user) { console.log('[AdminPage] exiting: no user'); return; }
     try {
-      const { data: userData } = await supabase
+      const { data: userData, error: userErr } = await supabase
         .from('users')
         .select('id, organization_id')
         .eq('clerk_id', user.id)
         .single();
+      console.log('[AdminPage] userData:', userData, 'userErr:', userErr);
       if (!userData?.organization_id) { setLoading(false); return; }
       setOrgId(userData.organization_id);
 
