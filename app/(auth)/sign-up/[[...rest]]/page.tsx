@@ -7,6 +7,8 @@ export default function SignUpPage() {
     <SignUp
       routing="path"
       path="/sign-up"
+      afterSignUpUrl="/assessments/new"
+      afterSignInUrl="/dashboard"
       appearance={{
         variables: {
           colorPrimary: '#6cc4b3',
