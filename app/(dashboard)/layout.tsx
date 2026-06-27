@@ -38,7 +38,6 @@ export default function DashboardLayout({
     { href: '/monitoring', label: 'Monitoring', icon: Activity },
     { href: '/reports', label: 'Reports', icon: FileText },
     { href: '/generate', label: 'Generate', icon: FilePlus2 },
-    { href: '/admin', label: 'Admin', icon: ShieldCheck },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 
