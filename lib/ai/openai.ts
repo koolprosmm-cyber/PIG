@@ -21,7 +21,12 @@ import { AssessmentResult } from '../pig3/types';
 import { retrieveKnowledge, RetrievedChunk } from '../pig3/retrieval';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+  defaultHeaders: {
+    'HTTP-Referer': 'https://pigframework.com',
+    'X-Title': 'PIG3 AI Coach',
+  },
 });
 
 const V1_APPROXIMATION_DISCLOSURE =
@@ -104,7 +109,7 @@ export async function generateAICoachResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
       messages: [
         {
           role: 'system',
