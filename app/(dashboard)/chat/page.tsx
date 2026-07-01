@@ -6,7 +6,6 @@ import { useSupabase } from '@/lib/hooks/useSupabase';
 import { AssessmentResult, ClusterAnswer } from '@/lib/pig3/types';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
-import { ChatSidebar } from '@/components/chat/ChatSidebar';
 
 interface Message {
   id: string;
@@ -15,10 +14,17 @@ interface Message {
   timestamp: Date;
 }
 
+interface Session {
+  id: string;
+  title: string;
+  created_at: string;
+}
+
 export default function ChatPage() {
   const supabase = useSupabase();
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -28,16 +34,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
+    if (user) fetchData();
   }, [user]);
-
-  useEffect(() => {
-    if (organizationId) {
-      createSession();
-    }
-  }, [organizationId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -70,24 +68,20 @@ export default function ChatPage() {
 
       if (assessments && assessments.length > 0) {
         const assessmentId = assessments[0].id;
-
         const { data: answerRows } = await supabase
           .from('assessment_answers')
           .select('cluster_id, value')
           .eq('assessment_id', assessmentId);
-
         const { data: resultRow } = await supabase
           .from('assessment_results')
           .select('*')
           .eq('assessment_id', assessmentId)
           .single();
-
         if (resultRow && answerRows) {
           const clusterAnswers: ClusterAnswer[] = answerRows.map((r: any) => ({
             clusterId: r.cluster_id,
             value: r.value,
           }));
-
           setResult({
             clusterAnswers,
             indices: { pci: resultRow.pci, iri: resultRow.iri, gci: resultRow.gci, sli: resultRow.sli },
@@ -103,9 +97,21 @@ export default function ChatPage() {
           });
         }
       }
+
+      // Load sessions
+      await loadSessions();
     } catch (error) {
       console.error('Error fetching data:', error);
     }
+  }
+
+  async function loadSessions() {
+    const { data } = await supabase
+      .from('chat_sessions')
+      .select('id, title, created_at')
+      .eq('user_id', user?.id)
+      .order('created_at', { ascending: false });
+    if (data) setSessions(data);
   }
 
   async function createSession() {
@@ -118,8 +124,38 @@ export default function ChatPage() {
       })
       .select()
       .single();
+    if (data) {
+      setSessionId(data.id);
+      setMessages([]);
+      await loadSessions();
+    }
+  }
 
-    if (data) setSessionId(data.id);
+  async function selectSession(id: string) {
+    setSessionId(id);
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('session_id', id)
+      .order('created_at', { ascending: true });
+    if (data) {
+      setMessages(data.map((m: any) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.created_at),
+      })));
+    }
+  }
+
+  async function deleteSession(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    await supabase.from('chat_sessions').delete().eq('id', id);
+    if (sessionId === id) {
+      setSessionId(null);
+      setMessages([]);
+    }
+    await loadSessions();
   }
 
   const scrollToBottom = () => {
@@ -128,6 +164,20 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+
+    let currentSessionId = sessionId;
+    if (!currentSessionId) {
+      const { data } = await supabase
+        .from('chat_sessions')
+        .insert({ user_id: user?.id, organization_id: organizationId, title: input.slice(0, 50) })
+        .select()
+        .single();
+      if (data) {
+        currentSessionId = data.id;
+        setSessionId(data.id);
+        await loadSessions();
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -143,7 +193,7 @@ export default function ChatPage() {
 
     try {
       await supabase.from('chat_messages').insert({
-        session_id: sessionId,
+        session_id: currentSessionId,
         role: 'user',
         content: userMessage.content,
       });
@@ -151,17 +201,8 @@ export default function ChatPage() {
       const coachResponse = await fetch('/api/chat/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: questionText,
-          result,
-          organizationName,
-          organizationId: organizationId ?? undefined,
-        }),
+        body: JSON.stringify({ question: questionText, result, organizationName, organizationId: organizationId ?? undefined }),
       });
-
-      if (!coachResponse.ok) {
-        throw new Error(`AI Coach request failed: ${coachResponse.status}`);
-      }
 
       const { answer: aiResponse } = await coachResponse.json();
 
@@ -175,20 +216,19 @@ export default function ChatPage() {
       setMessages(prev => [...prev, assistantMessage]);
 
       await supabase.from('chat_messages').insert({
-        session_id: sessionId,
+        session_id: currentSessionId,
         role: 'assistant',
         content: assistantMessage.content,
         token_count: Math.round(aiResponse.length / 4),
       });
     } catch (error) {
       console.error('Error in chat:', error);
-      const errorMessage: Message = {
+      setMessages(prev => [...prev, {
         id: Date.now().toString() + '-error',
         role: 'assistant',
         content: 'I apologize, but I encountered an error. Please try again later.',
         timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setLoading(false);
     }
@@ -196,8 +236,47 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-73px)] card overflow-hidden">
-      <ChatSidebar onSelectSession={() => {}} onNewSession={() => {}} />
+      {/* Sidebar */}
+      <div className="w-56 bg-surface-sunken border-r border-border flex flex-col flex-shrink-0">
+        <div className="p-3 border-b border-border">
+          <button
+            onClick={createSession}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-signal-teal text-canvas rounded-lg hover:bg-signal-teal/90 transition-colors text-sm font-medium"
+          >
+            <span>+</span>
+            New Conversation
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {sessions.length === 0 ? (
+            <p className="px-3 py-8 text-xs text-ink-faint text-center leading-relaxed">
+              Session history will appear here.
+            </p>
+          ) : (
+            sessions.map(s => (
+              <div
+                key={s.id}
+                onClick={() => selectSession(s.id)}
+                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-xs transition-colors ${
+                  sessionId === s.id
+                    ? 'bg-signal-teal/10 text-signal-teal'
+                    : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
+                }`}
+              >
+                <span className="truncate flex-1">{s.title}</span>
+                <button
+                  onClick={(e) => deleteSession(s.id, e)}
+                  className="ml-1 opacity-0 group-hover:opacity-100 text-ink-faint hover:text-red-400 transition-opacity"
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
+      {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
           <div>
@@ -222,11 +301,9 @@ export default function ChatPage() {
               <p className="text-sm mt-1 text-ink-muted">Try: "Why is our Institutions score lower than Governance?"</p>
             </div>
           )}
-
           {messages.map(message => (
             <ChatMessage key={message.id} message={message} />
           ))}
-
           {loading && (
             <div className="flex items-center gap-2 text-ink-muted">
               <div className="w-2 h-2 bg-signal-teal rounded-full animate-bounce" />
@@ -234,7 +311,6 @@ export default function ChatPage() {
               <div className="w-2 h-2 bg-signal-teal rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
