@@ -106,25 +106,18 @@ export default function ChatPage() {
   }
 
   async function loadSessions() {
-    const { data } = await supabase
-      .from('chat_sessions')
-      .select('id, title, created_at')
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
-    if (data) setSessions(data);
+    const res = await fetch('/api/chat/sessions');
+    if (res.ok) setSessions(await res.json());
   }
 
   async function createSession() {
-    const { data } = await supabase
-      .from('chat_sessions')
-      .insert({
-        user_id: user?.id,
-        organization_id: organizationId,
-        title: 'New Conversation',
-      })
-      .select()
-      .single();
-    if (data) {
+    const res = await fetch('/api/chat/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'New Conversation', organization_id: organizationId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
       setSessionId(data.id);
       setMessages([]);
       await loadSessions();
@@ -133,12 +126,9 @@ export default function ChatPage() {
 
   async function selectSession(id: string) {
     setSessionId(id);
-    const { data } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('session_id', id)
-      .order('created_at', { ascending: true });
-    if (data) {
+    const res = await fetch(`/api/chat/messages?session_id=${id}`);
+    if (res.ok) {
+      const data = await res.json();
       setMessages(data.map((m: any) => ({
         id: m.id,
         role: m.role,
@@ -150,7 +140,11 @@ export default function ChatPage() {
 
   async function deleteSession(id: string, e: React.MouseEvent) {
     e.stopPropagation();
-    await supabase.from('chat_sessions').delete().eq('id', id);
+    await fetch('/api/chat/sessions', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
     if (sessionId === id) {
       setSessionId(null);
       setMessages([]);
@@ -167,12 +161,13 @@ export default function ChatPage() {
 
     let currentSessionId = sessionId;
     if (!currentSessionId) {
-      const { data } = await supabase
-        .from('chat_sessions')
-        .insert({ user_id: user?.id, organization_id: organizationId, title: input.slice(0, 50) })
-        .select()
-        .single();
-      if (data) {
+      const res = await fetch('/api/chat/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input.slice(0, 50), organization_id: organizationId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
         currentSessionId = data.id;
         setSessionId(data.id);
         await loadSessions();
@@ -192,10 +187,10 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      await supabase.from('chat_messages').insert({
-        session_id: currentSessionId,
-        role: 'user',
-        content: userMessage.content,
+      await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: currentSessionId, role: 'user', content: userMessage.content }),
       });
 
       const coachResponse = await fetch('/api/chat/coach', {
@@ -215,11 +210,10 @@ export default function ChatPage() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      await supabase.from('chat_messages').insert({
-        session_id: currentSessionId,
-        role: 'assistant',
-        content: assistantMessage.content,
-        token_count: Math.round(aiResponse.length / 4),
+      await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: currentSessionId, role: 'assistant', content: assistantMessage.content, token_count: Math.round(aiResponse.length / 4) }),
       });
     } catch (error) {
       console.error('Error in chat:', error);
