@@ -109,7 +109,7 @@ export async function generateAICoachResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      model: 'meta-llama/llama-3.3-70b-instruct',
       messages: [
         {
           role: 'system',
