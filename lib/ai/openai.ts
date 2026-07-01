@@ -109,7 +109,7 @@ export async function generateAICoachResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'anthropic/claude-3.5-haiku',
+      model: 'anthropic/claude-3.5-haiku-20241022',
       messages: [
         {
           role: 'system',
@@ -127,8 +127,9 @@ export async function generateAICoachResponse(
     });
 
     return response.choices[0].message.content || 'I apologize, but I could not generate a response. Please try again.';
-  } catch (error) {
-    console.error('AI Coach Error:', error);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('AI Coach Error:', msg);
     return 'I apologize, but I encountered an error. Please try again later.';
   }
 }
