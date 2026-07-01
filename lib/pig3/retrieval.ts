@@ -11,7 +11,11 @@ import OpenAI from 'openai';
 import { supabaseAdmin } from '../supabase/server';
 import { KnowledgeItem, searchKnowledge as keywordSearchKnowledge } from './knowledge';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? 'missing' });
+  return _openai;
+}
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const DEFAULT_MATCH_COUNT = 5;
 const DEFAULT_MIN_SIMILARITY = 0.7;
@@ -29,7 +33,7 @@ export interface RetrievedChunk {
 }
 
 async function embedQuery(query: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
+  const response = await getOpenAI().embeddings.create({
     model: EMBEDDING_MODEL,
     input: query,
   });
