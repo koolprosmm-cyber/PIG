@@ -109,7 +109,7 @@ export async function generateAICoachResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'anthropic/claude-3.5-haiku-20241022',
+      model: 'openai/gpt-4o-mini',
       messages: [
         {
           role: 'system',
